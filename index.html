@@ -3,254 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة الشكاوى والاستحقاقات</title>
-    <!-- استيراد خط عربي أنيق (Cairo) -->
+    <title>النظام الإداري للشكاوى والاستحقاقات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Cairo', sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background-color: #f4f7f6; color: #333; direction: rtl; }
+        .page { display: none; min-height: 100vh; padding: 20px; }
+        .page.active { display: flex; flex-direction: column; }
 
-        body {
-            background-color: #f0f4f8;
-            color: #333;
-            direction: rtl;
-        }
+        /* تسجيل الدخول */
+        #login-page { justify-content: center; align-items: center; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .login-card { background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 100%; max-width: 400px; text-align: center; }
+        .login-card h2 { margin-bottom: 25px; color: #0f172a; font-size: 22px; }
+        .form-group { margin-bottom: 20px; text-align: right; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #475569; }
+        .form-group input { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; outline: none; }
+        .form-group input:focus { border-color: #3b82f6; }
+        .btn { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        .btn:hover { background: #1d4ed8; }
+        .error-msg { color: #dc2626; margin-top: 15px; font-size: 14px; display: none; }
 
-        /* تنسيق صفحات النظام */
-        .page {
-            display: none;
-            min-height: 100vh;
-            padding: 20px;
-        }
+        /* التخطيط العام للوحة التحكم */
+        header { background: #ffffff; padding: 20px 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        header h1 { color: #1e293b; font-size: 20px; }
+        .user-info { display: flex; align-items: center; gap: 15px; }
+        .badge { background: #e0f2fe; color: #0369a1; padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+        .logout-btn { background: #fee2e2; color: #991b1b; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .logout-btn:hover { background: #fecaca; }
 
-        .page.active {
-            display: flex;
-            flex-direction: column;
-        }
+        /* الأقسام واللوحات الإدارية */
+        .admin-section { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); margin-bottom: 20px; }
+        .admin-section h3 { margin-bottom: 15px; color: #334155; font-size: 17px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        .inline-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+        .inline-form .form-group { flex: 1; min-width: 180px; margin-bottom: 0; }
+        .inline-form button { height: 46px; }
 
-        /* --- واجهة تسجيل الدخول --- */
-        #login-page {
-            justify-content: center;
-            align-items: center;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        }
+        /* نموذج إضافة بيانات للجدول */
+        .data-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 15px; }
+        .data-form-grid input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
 
-        .login-card {
-            background: #ffffff;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
+        /* الجدول */
+        .table-container { background: white; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); overflow-x: auto; flex-grow: 1; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th { background: #1e293b; color: white; padding: 14px; font-size: 14px; font-weight: 600; }
+        td { padding: 12px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #334155; }
+        tr:hover { background: #f8fafc; }
 
-        .login-card h2 {
-            margin-bottom: 25px;
-            color: #1e3c72;
-            font-size: 24px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-            text-align: right;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            border-color: #2a5298;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: #2a5298;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn:hover {
-            background: #1e3c72;
-        }
-
-        .error-msg {
-            color: #e74c3c;
-            margin-top: 15px;
-            font-size: 14px;
-            display: none;
-        }
-
-        /* --- واجهة النظام الرئيسية --- */
-        #dashboard-page {
-            background-color: #f8fafc;
-        }
-
-        header {
-            background: #ffffff;
-            padding: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-
-        header h1 {
-            color: #1e3c72;
-            font-size: 22px;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .badge {
-            background: #e0f2fe;
-            color: #0369a1;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .logout-btn {
-            background: #fee2e2;
-            color: #991b1b;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background 0.2s;
-        }
-
-        .logout-btn:hover {
-            background: #fecaca;
-        }
-
-        /* لوحة التحكم بالمطور والاشتراكات */
-        .dev-panel {
-            background: linear-gradient(to right, #0f172a, #1e293b);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .dev-panel h3 {
-            font-size: 18px;
-            color: #38bdf8;
-        }
-
-        .subscription-control {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .subscription-control input {
-            padding: 8px;
-            border-radius: 6px;
-            border: none;
-            width: 120px;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .subscription-control button {
-            background: #38bdf8;
-            color: #0f172a;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .subscription-control button:hover {
-            background: #0ea5e9;
-        }
-
-        /* تنسيق الجدول */
-        .table-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            overflow-x: auto;
-            flex-grow: 1;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: center;
-        }
-
-        th {
-            background: #1e3c72;
-            color: white;
-            padding: 15px;
-            font-size: 15px;
-            font-weight: 600;
-        }
-
-        td {
-            padding: 14px;
-            border-bottom: 1px solid #e2e8f0;
-            font-size: 14px;
-            color: #334155;
-        }
-
-        tr:hover {
-            background: #f1f5f9;
-        }
-
-        /* توقيع المطور في الفوتر */
-        footer {
-            text-align: center;
-            padding: 15px;
-            color: #64748b;
-            font-size: 13px;
-            margin-top: 20px;
-        }
+        /* لوحة المطور الخاصة */
+        .dev-container { background: #0f172a; color: white; padding: 30px; border-radius: 10px; }
+        .dev-container h2 { color: #38bdf8; margin-bottom: 15px; }
+        .dev-container p { color: #94a3b8; font-size: 15px; line-height: 1.6; }
     </style>
 </head>
 <body>
 
-    <!-- 1. واجهة تسجيل الدخول -->
+    <!-- صفحة تسجيل الدخول -->
     <div id="login-page" class="page active">
         <div class="login-card">
             <h2>تسجيل الدخول للنظام</h2>
@@ -264,94 +71,145 @@
                     <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
                 </div>
                 <button type="submit" class="btn">دخول</button>
-                <div id="error-msg" class="error-msg">اسم المستخدم أو كلمة المرور غير صحيحة!</div>
+                <div id="error-msg" class="error-msg">بيانات الدخول غير صحيحة!</div>
             </form>
         </div>
     </div>
 
-    <!-- 2. واجهة لوحة التحكم والجدول -->
-    <div id="dashboard-page" class="page">
+    <!-- واجهة المطور (كميل) -->
+    <div id="dev-dashboard" class="page">
         <header>
-            <h1>نظام إدارة الشكاوى والاستحقاقات المالية</h1>
+            <h1>لوحة تحكم المطور</h1>
             <div class="user-info">
-                <span id="role-badge" class="badge">مدير الشركة</span>
+                <span class="badge">المطور: كميل (komail)</span>
+                <button class="logout-btn" onclick="handleLogout()">تسجيل خروج</button>
+            </div>
+        </header>
+        <div class="dev-container">
+            <h2>مرحباً بك، كميل</h2>
+            <p>هذه الواجهة مخصصة لك بصفتك مطور النظام (Komail / رمز: 2004). النظام يعمل بكامل صلاحياته، ويتم إدارة حسابات الموظفين وإدخال البيانات من قبل مدير الشركة (نبيل الموسوي).</p>
+        </div>
+    </div>
+
+    <!-- واجهة مدير الشركة (نبيل الموسوي) -->
+    <div id="admin-dashboard" class="page">
+        <header>
+            <h1>لوحة تحكم مدير الشركة</h1>
+            <div class="user-info">
+                <span class="badge" id="admin-badge">مدير الشركة: نبيل الموسوي</span>
                 <button class="logout-btn" onclick="handleLogout()">تسجيل خروج</button>
             </div>
         </header>
 
-        <!-- لوحة تحكم خاصة بالمطور (تظهر فقط عند دخول المطور komail أو المدير) -->
-        <div class="dev-panel">
-            <div>
-                <h3>لوحة تحكم المطور (Komail)</h3>
-                <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">يمكنك هنا التحكم وتحديث قيمة الاشتراك الشهري للمشتكين.</p>
-            </div>
-            <div class="subscription-control">
-                <label for="monthly-sub-input" style="font-size: 14px;">الاشتراك الشهري:</label>
-                <input type="number" id="monthly-sub-input" value="150000">
-                <button onclick="updateSubscription()">تحديث للكل</button>
-            </div>
+        <!-- قسم إنشاء حسابات الموظفين -->
+        <div class="admin-section">
+            <h3>إدارة وإنشاء حسابات الموظفين الجدد</h3>
+            <form class="inline-form" onsubmit="createEmployeeAccount(event)">
+                <div class="form-group">
+                    <label>اسم المستخدم للموظف</label>
+                    <input type="text" id="emp-user" placeholder="مثال: employee1" required>
+                </div>
+                <div class="form-group">
+                    <label>رمز المرور</label>
+                    <input type="password" id="emp-pass" placeholder="رمز المرور" required>
+                </div>
+                <div class="form-group">
+                    <label>اسم الموظف الكامل</label>
+                    <input type="text" id="emp-name" placeholder="اسم الموظف" required>
+                </div>
+                <button type="submit" class="btn">إنشاء الحساب</button>
+            </form>
+            <div id="emp-created-msg" style="color: #16a34a; font-size: 13px; margin-top: 8px; display: none;">تم إنشاء حساب الموظف بنجاح!</div>
         </div>
 
-        <!-- جدول البيانات -->
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>تسلسل</th>
-                        <th>اسم المشتكي</th>
-                        <th>رقم القرار</th>
-                        <th>مبلغ الاشتراكات</th>
-                        <th>مبلغ مكافأة نهاية خدمة</th>
-                        <th>مبلغ إجازات</th>
-                        <th>الملاحظات</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    <!-- صف تجريبي أول -->
-                    <tr>
-                        <td>1</td>
-                        <td>أحمد محمد علي</td>
-                        <td>قرار/2026/45</td>
-                        <td class="sub-cell">150,000 د.ع</td>
-                        <td>2,500,000 د.ع</td>
-                        <td>1,200,000 د.ع</td>
-                        <td>مكتمل المستحقات</td>
-                    </tr>
-                    <!-- صف تجريبي ثاني -->
-                    <tr>
-                        <td>2</td>
-                        <td>فاطمة حسن كاظم</td>
-                        <td>قرار/2026/88</td>
-                        <td class="sub-cell">150,000 د.ع</td>
-                        <td>3,100,000 د.ع</td>
-                        <td>900,000 د.ع</td>
-                        <td>بانتظار التدقيق</td>
-                    </tr>
-                    <!-- صف تجريبي ثالث -->
-                    <tr>
-                        <td>3</td>
-                        <td>محمد عبد الأمير</td>
-                        <td>قرار/2026/102</td>
-                        <td class="sub-cell">150,000 د.ع</td>
-                        <td>1,800,000 د.ع</td>
-                        <td>1,500,000 د.ع</td>
-                        <td>تم الصرف</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+        <!-- جدول البيانات والتحكم به -->
+        <div class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <h3>إدارة السجلات والبيانات</h3>
+            <form class="data-form-grid" onsubmit="addTableRow(event)" style="margin-bottom: 20px;">
+                <input type="text" id="f-seq" placeholder="التسلسل" required style="width: 100%;">
+                <input type="text" id="f-name" placeholder="اسم المشتكي" required>
+                <input type="text" id="f-decision" placeholder="رقم القرار" required>
+                <input type="text" id="f-sub" placeholder="مبلغ اشتراكات" required>
+                <input type="text" id="f-reward" placeholder="مبلغ مكافأة نهاية خدمة" required>
+                <input type="text" id="f-leave" placeholder="مبلغ إجازات" required>
+                <input type="text" id="f-notes" placeholder="الملاحظات">
+                <button type="submit" class="btn" style="grid-column: span 1;">إضافة سطر</button>
+            </form>
 
-        <footer>
-            تصميم وتطوير: <strong>Komail</strong> | النظام الآمن لإدارة الشكاوى
-        </footer>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>تسلسل</th>
+                            <th>اسم المشتكي</th>
+                            <th>رقم القرار</th>
+                            <th>مبلغ اشتراكات</th>
+                            <th>مبلغ مكافأة نهاية خدمة</th>
+                            <th>مبلغ إجازات</th>
+                            <th>الملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="main-table-body">
+                        <!-- البيانات تضاف هنا ديناميكياً -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- واجهة الموظف -->
+    <div id="employee-dashboard" class="page">
+        <header>
+            <h1>لوحة إدخال البيانات (الموظف)</h1>
+            <div class="user-info">
+                <span class="badge" id="emp-badge-name">موظف</span>
+                <button class="logout-btn" onclick="handleLogout()">تسجيل خروج</button>
+            </div>
+        </header>
+
+        <div class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <h3>إضافة وتحديث سجلات الشكاوى</h3>
+            <form class="data-form-grid" onsubmit="addTableRow(event)" style="margin-bottom: 20px;">
+                <input type="text" id="e-f-seq" placeholder="التسلسل" required>
+                <input type="text" id="e-f-name" placeholder="اسم المشتكي" required>
+                <input type="text" id="e-f-decision" placeholder="رقم القرار" required>
+                <input type="text" id="e-f-sub" placeholder="مبلغ اشتراكات" required>
+                <input type="text" id="e-f-reward" placeholder="مبلغ مكافأة نهاية خدمة" required>
+                <input type="text" id="e-f-leave" placeholder="مبلغ إجازات" required>
+                <input type="text" id="e-f-notes" placeholder="الملاحظات">
+                <button type="submit" class="btn">إضافة سطر</button>
+            </form>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>تسلسل</th>
+                            <th>اسم المشتكي</th>
+                            <th>رقم القرار</th>
+                            <th>مبلغ اشتراكات</th>
+                            <th>مبلغ مكافأة نهاية خدمة</th>
+                            <th>مبلغ إجازات</th>
+                            <th>الملاحظات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="emp-table-body">
+                        <!-- نفس محتوى الجدول -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script>
-        // بيانات الحسابات المعتمدة
-        const accounts = {
-            "nabeel": { pass: "1973", role: "مدير الشركة (نَبيل)" },
-            "komail": { pass: "2004", role: "مطور النظام (كميل)" }
+        // قاعدة بيانات الحسابات الأولية
+        let usersDB = {
+            "komail": { pass: "2004", role: "dev", name: "كميل (المطور)" },
+            "nabeel": { pass: "1973", role: "admin", name: "نبيل الموسوي (مدير الشركة)" }
         };
+
+        // مصفوفة تخزين البيانات للجدول المشترك
+        let tableData = [];
 
         function handleLogin(event) {
             event.preventDefault();
@@ -359,38 +217,120 @@
             const pass = document.getElementById('password').value.trim();
             const errorMsg = document.getElementById('error-msg');
 
-            if (accounts[user] && accounts[user].pass === pass) {
-                // تسجيل الدخول بنجاح
+            if (usersDB[user] && usersDB[user].pass === pass) {
                 document.getElementById('login-page').classList.remove('active');
-                document.getElementById('dashboard-page').classList.add('active');
-                
-                // تخصيص الواجهة حسب المستخدم
-                document.getElementById('role-badge').innerText = accounts[user].role;
-                
                 errorMsg.style.display = 'none';
+
+                const userInfo = usersDB[user];
+                if (userInfo.role === 'dev') {
+                    document.getElementById('dev-dashboard').classList.add('active');
+                } else if (userInfo.role === 'admin') {
+                    document.getElementById('admin-dashboard').classList.add('active');
+                } else if (userInfo.role === 'employee') {
+                    document.getElementById('employee-dashboard').classList.add('active');
+                    document.getElementById('emp-badge-name').innerText = userInfo.name;
+                }
             } else {
                 errorMsg.style.display = 'block';
             }
         }
 
         function handleLogout() {
-            document.getElementById('dashboard-page').classList.remove('active');
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('login-page').classList.add('active');
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
         }
 
-        // وظيفة تحديث مبلغ الاشتراك الشهري لجميع الصفوف في الجدول (خاصة بصلاحيات المطور)
-        function updateSubscription() {
-            const newValue = document.getElementById('monthly-sub-input').value;
-            const formattedValue = Number(newValue).toLocaleString() + ' د.ع';
-            const subCells = document.querySelectorAll('.sub-cell');
+        // إضافة حساب موظف جديد بواسطة المدير (نبيل)
+        function createEmployeeAccount(event) {
+            event.preventDefault();
+            const user = document.getElementById('emp-user').value.trim();
+            const pass = document.getElementById('emp-pass').value.trim();
+            const name = document.getElementById('emp-name').value.trim();
+
+            if (usersDB[user]) {
+                alert('اسم المستخدم موجود مسبقاً، ياختر اسم آخر.');
+                return;
+            }
+
+            usersDB[user] = { pass: pass, role: 'employee', name: name };
             
-            subCells.forEach(cell => {
-                cell.innerText = formattedValue;
+            document.getElementById('emp-user').value = '';
+            document.getElementById('emp-pass').value = '';
+            document.getElementById('emp-name').value = '';
+
+            const msg = document.getElementById('emp-created-msg');
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+        }
+
+        // إضافة سطر جديد للجدول (يعمل من لوحة المدير أو الموظف)
+        function addTableRow(event) {
+            event.preventDefault();
+            
+            // تحديد الحقول النشطة حسب الواجهة المفتوحة
+            let seq, name, decision, sub, reward, leave, notes;
+            
+            if(document.getElementById('admin-dashboard').classList.contains('active')) {
+                seq = document.getElementById('f-seq').value;
+                name = document.getElementById('f-name').value;
+                decision = document.getElementById('f-decision').value;
+                sub = document.getElementById('f-sub').value;
+                reward = document.getElementById('f-reward').value;
+                leave = document.getElementById('f-leave').value;
+                notes = document.getElementById('f-notes').value;
+                
+                // تفريغ الحقول
+                document.getElementById('f-seq').value = '';
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-decision').value = '';
+                document.getElementById('f-sub').value = '';
+                document.getElementById('f-reward').value = '';
+                document.getElementById('f-leave').value = '';
+                document.getElementById('f-notes').value = '';
+            } else {
+                seq = document.getElementById('e-f-seq').value;
+                name = document.getElementById('e-f-name').value;
+                decision = document.getElementById('e-f-decision').value;
+                sub = document.getElementById('e-f-sub').value;
+                reward = document.getElementById('e-f-reward').value;
+                leave = document.getElementById('e-f-leave').value;
+                notes = document.getElementById('e-f-notes').value;
+                
+                // تفريغ الحقول
+                document.getElementById('e-f-seq').value = '';
+                document.getElementById('e-f-name').value = '';
+                document.getElementById('e-f-decision').value = '';
+                document.getElementById('e-f-sub').value = '';
+                document.getElementById('e-f-reward').value = '';
+                document.getElementById('e-f-leave').value = '';
+                document.getElementById('e-f-notes').value = '';
+            }
+
+            tableData.push({ seq, name, decision, sub, reward, leave, notes });
+            renderTables();
+        }
+
+        // تحديث وعرض الجداول في كلتا الواجهتين (المدير والموظف)
+        function renderTables() {
+            let htmlContent = '';
+            tableData.forEach(row => {
+                htmlContent += `
+                    <tr>
+                        <td>${row.seq}</td>
+                        <td>${row.name}</td>
+                        <td>${row.decision}</td>
+                        <td>${row.sub}</td>
+                        <td>${row.reward}</td>
+                        <td>${row.leave}</td>
+                        <td>${row.notes}</td>
+                    </tr>
+                `;
             });
 
-            alert('تم تحديث مبلغ الاشتراكات الشهري بنجاح لكافة الحقول.');
+            document.getElementById('main-table-body').innerHTML = htmlContent;
+            document.getElementById('emp-table-body').innerHTML = htmlContent;
         }
     </script>
 </body>
