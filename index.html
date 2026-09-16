@@ -5,6 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>النظام الإداري للشكاوى والاستحقاقات</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- استيراد مكتبات Firebase وربط إعداداتك -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, push } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCZhxGhLA4hiCFsqvcMWWPQ_ACx6gpCN9U",
+            authDomain: "astra-8d43c.firebaseapp.com",
+            databaseURL: "https://astra-8d43c-default-rtdb.firebaseio.com",
+            projectId: "astra-8d43c",
+            storageBucket: "astra-8d43c.firebasestorage.app",
+            messagingSenderId: "820918587913",
+            appId: "1:820918587913:web:afa3edaed3c6dc13c79ed8",
+            measurementId: "G-KG6433Z6KG"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        window.db = db;
+        window.dbRef = ref;
+        window.dbSet = set;
+        window.dbGet = get;
+        window.dbOnValue = onValue;
+        window.dbPush = push;
+        
+        initFirebaseListeners();
+    </script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { background-color: #f4f7f6; color: #333; direction: rtl; }
@@ -23,7 +53,7 @@
         .btn:hover { background: #1d4ed8; }
         .error-msg { color: #dc2626; margin-top: 15px; font-size: 14px; display: none; }
 
-        /* التخطيط العام للوحة التحكم */
+        /* التخطيط العام لوحة التحكم */
         header { background: #ffffff; padding: 20px 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         header h1 { color: #1e293b; font-size: 20px; }
         .user-info { display: flex; align-items: center; gap: 15px; }
@@ -57,10 +87,11 @@
         .subscription-box label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 600; }
         .subscription-box input, .subscription-box select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 15px; }
 
-        /* تنبيهات الاشتراك */
-        .sub-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-        .sub-banner.expired { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
-        .whatsapp-btn { background: #25d366; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+        /* شاشة القفل عند انتهاء الاشتراك */
+        .lock-screen { background: #fef2f2; border: 2px solid #fecaca; color: #991b1b; padding: 40px; border-radius: 12px; text-align: center; margin: auto; max-width: 600px; }
+        .lock-screen h2 { font-size: 24px; margin-bottom: 15px; }
+        .lock-screen p { font-size: 16px; margin-bottom: 25px; line-height: 1.6; }
+        .whatsapp-btn { background: #25d366; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 8px; font-size: 16px; }
         .whatsapp-btn:hover { background: #22bf5b; }
     </style>
 </head>
@@ -96,15 +127,15 @@
         </header>
         <div class="dev-container">
             <h2>مرحباً بك، كميل</h2>
-            <p>من خلال هذه الواجهة يمكنك التحكم بوضع اشتراك النظام (تفعيل أو إلغاء)، وتحديد تاريخ الانتهاء وسعر الاشتراك الشهري (20$).</p>
+            <p>النظام الآن مربوط بقاعدة بيانات Firebase الخاصة بك. يمكنك من هنا التحكم بحالة الاشتراك وتفعيل أو إيقاف النظام للجميع بضغطة زر.</p>
             
             <div class="subscription-box">
-                <h3>إدارة اشتراك النظام</h3>
+                <h3>إدارة اشتراك النظام (Firebase)</h3>
                 <form onsubmit="updateSubscriptionSettings(event)">
                     <label>حالة الاشتراك:</label>
                     <select id="sub-status-select">
                         <option value="active">فعال</option>
-                        <option value="expired">منتهي / ملغي</option>
+                        <option value="expired">منتهي / إيقاف النظام</option>
                     </select>
 
                     <label>تاريخ انتهاء الاشتراك:</label>
@@ -113,7 +144,7 @@
                     <label>سعر الاشتراك الشهري ($):</label>
                     <input type="text" id="sub-price-input" value="20$" readonly>
 
-                    <button type="submit" class="btn" style="background: #38bdf8; color: #0f172a;">حفظ وتحديث حالة الاشتراك للكل</button>
+                    <button type="submit" class="btn" style="background: #38bdf8; color: #0f172a;">حفظ وتحديث قاعدة البيانات</button>
                 </form>
             </div>
         </div>
@@ -129,63 +160,63 @@
             </div>
         </header>
 
-        <!-- عداد وحالة الاشتراك -->
-        <div id="admin-sub-banner" class="sub-banner">
-            <span id="admin-sub-text">حالة الاشتراك: فعال (ينتهي في 2026/09/30) - تكلفة الاشتراك: 20$</span>
-            <a id="admin-wa-btn" href="https://wa.me/9647744744725" target="_blank" class="whatsapp-btn" style="display:none;">تجديد الاشتراك مع المطور</a>
-        </div>
-
-        <!-- قسم إنشاء حسابات الموظفين -->
-        <div class="admin-section">
-            <h3>إدارة وإنشاء حسابات الموظفين الجدد</h3>
-            <form class="inline-form" onsubmit="createEmployeeAccount(event)">
-                <div class="form-group">
-                    <label>اسم المستخدم للموظف</label>
-                    <input type="text" id="emp-user" placeholder="مثال: employee1" required>
-                </div>
-                <div class="form-group">
-                    <label>رمز المرور</label>
-                    <input type="password" id="emp-pass" placeholder="رمز المرور" required>
-                </div>
-                <div class="form-group">
-                    <label>اسم الموظف الكامل</label>
-                    <input type="text" id="emp-name" placeholder="اسم الموظف" required>
-                </div>
-                <button type="submit" class="btn">إنشاء الحساب</button>
-            </form>
-            <div id="emp-created-msg" style="color: #16a34a; font-size: 13px; margin-top: 8px; display: none;">تم إنشاء حساب الموظف بنجاح!</div>
-        </div>
-
-        <!-- جدول البيانات والتحكم به -->
-        <div class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
-            <h3>إدارة السجلات والبيانات</h3>
-            <form class="data-form-grid" onsubmit="addTableRow(event)" style="margin-bottom: 20px;">
-                <input type="text" id="f-seq" placeholder="التسلسل" required style="width: 100%;">
-                <input type="text" id="f-name" placeholder="اسم المشتكي" required>
-                <input type="text" id="f-decision" placeholder="رقم القرار" required>
-                <input type="text" id="f-sub" placeholder="مبلغ اشتراكات" required>
-                <input type="text" id="f-reward" placeholder="مبلغ مكافأة نهاية خدمة" required>
-                <input type="text" id="f-leave" placeholder="مبلغ إجازات" required>
-                <input type="text" id="f-notes" placeholder="الملاحظات">
-                <button type="submit" class="btn" style="grid-column: span 1;">إضافة سطر</button>
-            </form>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>تسلسل</th>
-                            <th>اسم المشتكي</th>
-                            <th>رقم القرار</th>
-                            <th>مبلغ اشتراكات</th>
-                            <th>مبلغ مكافأة نهاية خدمة</th>
-                            <th>مبلغ إجازات</th>
-                            <th>الملاحظات</th>
-                        </tr>
-                    </thead>
-                    <tbody id="main-table-body"></tbody>
-                </table>
+        <div id="admin-content-area" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div class="admin-section">
+                <h3>إدارة وإنشاء حسابات الموظفين الجدد</h3>
+                <form class="inline-form" onsubmit="createEmployeeAccount(event)">
+                    <div class="form-group">
+                        <label>اسم المستخدم للموظف</label>
+                        <input type="text" id="emp-user" placeholder="مثال: employee1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>رمز المرور</label>
+                        <input type="password" id="emp-pass" placeholder="رمز المرور" required>
+                    </div>
+                    <div class="form-group">
+                        <label>اسم الموظف الكامل</label>
+                        <input type="text" id="emp-name" placeholder="اسم الموظف" required>
+                    </div>
+                    <button type="submit" class="btn">إنشاء الحساب</button>
+                </form>
+                <div id="emp-created-msg" style="color: #16a34a; font-size: 13px; margin-top: 8px; display: none;">تم إنشاء حساب الموظف بنجاح وحفظه في القاعدة!</div>
             </div>
+
+            <div class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+                <h3>إدارة السجلات والبيانات</h3>
+                <form class="data-form-grid" onsubmit="addTableRow(event)" style="margin-bottom: 20px;">
+                    <input type="text" id="f-seq" placeholder="التسلسل" required style="width: 100%;">
+                    <input type="text" id="f-name" placeholder="اسم المشتكي" required>
+                    <input type="text" id="f-decision" placeholder="رقم القرار" required>
+                    <input type="text" id="f-sub" placeholder="مبلغ اشتراكات" required>
+                    <input type="text" id="f-reward" placeholder="مبلغ مكافأة نهاية خدمة" required>
+                    <input type="text" id="f-leave" placeholder="مبلغ إجازات" required>
+                    <input type="text" id="f-notes" placeholder="الملاحظات">
+                    <button type="submit" class="btn" style="grid-column: span 1;">إضافة سطر</button>
+                </form>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>تسلسل</th>
+                                <th>اسم المشتكي</th>
+                                <th>رقم القرار</th>
+                                <th>مبلغ اشتراكات</th>
+                                <th>مبلغ مكافأة نهاية خدمة</th>
+                                <th>مبلغ إجازات</th>
+                                <th>الملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="main-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="admin-lock-screen" class="lock-screen" style="display: none;">
+            <h2>انتهى اشتراك النظام!</h2>
+            <p>عذراً، تم توقف النظام بسبب انتهاء فترة الاشتراك الشهري (20$). لغرض إعادة تفعيل النظام، يرجى التواصل مع المطور (كميل).</p>
+            <a href="https://wa.me/9647744744725" target="_blank" class="whatsapp-btn">تواصل مع المطور عبر الواتساب لتجديد الاشتراك</a>
         </div>
     </div>
 
@@ -199,13 +230,7 @@
             </div>
         </header>
 
-        <!-- عداد وحالة الاشتراك -->
-        <div id="emp-sub-banner" class="sub-banner">
-            <span id="emp-sub-text">حالة الاشتراك: فعال (ينتهي في 2026/09/30) - تكلفة الاشتراك: 20$</span>
-            <a id="emp-wa-btn" href="https://wa.me/9647744744725" target="_blank" class="whatsapp-btn" style="display:none;">تجديد الاشتراك مع المطور</a>
-        </div>
-
-        <div class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
+        <div id="emp-content-area" class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
             <h3>إضافة وتحديث سجلات الشكاوى</h3>
             <form class="data-form-grid" onsubmit="addTableRow(event)" style="margin-bottom: 20px;">
                 <input type="text" id="e-f-seq" placeholder="التسلسل" required>
@@ -235,51 +260,105 @@
                 </table>
             </div>
         </div>
+
+        <div id="emp-lock-screen" class="lock-screen" style="display: none;">
+            <h2>انتهى اشتراك النظام!</h2>
+            <p>عذراً، تم توقف النظام بسبب انتهاء فترة الاشتراك الشهري (20$). لغرض إعادة تفعيل النظام، يرجى التواصل مع المطور (كميل).</p>
+            <a href="https://wa.me/9647744744725" target="_blank" class="whatsapp-btn">تواصل مع المطور عبر الواتساب لتجديد الاشتراك</a>
+        </div>
     </div>
 
     <script>
-        let usersDB = {
-            "komail": { pass: "2004", role: "dev", name: "كميل (المطور)" },
-            "nabeel": { pass: "1973", role: "admin", name: "نبيل الموسوي (مدير الشركة)" }
-        };
+        let currentLoggedUserRole = '';
 
-        // إعدادات الاشتراك المبدئية (نهاية شهر 9 سنة 2026)
-        let subscriptionSettings = {
-            status: "active", // active أو expired
-            endDate: "2026-09-30",
-            price: "20$"
-        };
+        function initFirebaseListeners() {
+            window.dbOnValue(window.dbRef(window.db, 'subscription'), (snapshot) => {
+                const subData = snapshot.val();
+                if (subData) {
+                    document.getElementById('sub-status-select').value = subData.status;
+                    document.getElementById('sub-date-input').value = subData.endDate;
+                    
+                    if (currentLoggedUserRole === 'admin' || currentLoggedUserRole === 'employee') {
+                        applyLockState(subData.status);
+                    }
+                }
+            });
 
-        let tableData = [];
+            window.dbOnValue(window.dbRef(window.db, 'tableData'), (snapshot) => {
+                const data = snapshot.val();
+                let htmlContent = '';
+                if (data) {
+                    Object.values(data).forEach(row => {
+                        htmlContent += `
+                            <tr>
+                                <td>${row.seq}</td>
+                                <td>${row.name}</td>
+                                <td>${row.decision}</td>
+                                <td>${row.sub}</td>
+                                <td>${row.reward}</td>
+                                <td>${row.leave}</td>
+                                <td>${row.notes}</td>
+                            </tr>
+                        `;
+                    });
+                }
+                document.getElementById('main-table-body').innerHTML = htmlContent;
+                document.getElementById('emp-table-body').innerHTML = htmlContent;
+            });
+        }
 
-        function handleLogin(event) {
+        async function handleLogin(event) {
             event.preventDefault();
             const user = document.getElementById('username').value.trim();
             const pass = document.getElementById('password').value.trim();
             const errorMsg = document.getElementById('error-msg');
 
-            if (usersDB[user] && usersDB[user].pass === pass) {
-                document.getElementById('login-page').classList.remove('active');
-                errorMsg.style.display = 'none';
+            const fixedUsers = {
+                "komail": { pass: "2004", role: "dev", name: "كميل (المطور)" },
+                "nabeel": { pass: "1973", role: "admin", name: "نبيل الموسوي (مدير الشركة)" }
+            };
 
-                const userInfo = usersDB[user];
-                if (userInfo.role === 'dev') {
-                    document.getElementById('dev-dashboard').classList.add('active');
-                } else {
-                    updateBanners();
-                    if (userInfo.role === 'admin') {
-                        document.getElementById('admin-dashboard').classList.add('active');
-                    } else if (userInfo.role === 'employee') {
-                        document.getElementById('employee-dashboard').classList.add('active');
-                        document.getElementById('emp-badge-name').innerText = userInfo.name;
-                    }
+            if (fixedUsers[user] && fixedUsers[user].pass === pass) {
+                proceedLogin(fixedUsers[user]);
+                return;
+            }
+
+            const snapshot = await window.dbGet(window.dbRef(window.db, 'users/' + user));
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                if (userData.pass === pass) {
+                    proceedLogin(userData);
+                    return;
                 }
+            }
+
+            errorMsg.style.display = 'block';
+        }
+
+        function proceedLogin(userInfo) {
+            document.getElementById('login-page').classList.remove('active');
+            document.getElementById('error-msg').style.display = 'none';
+            currentLoggedUserRole = userInfo.role;
+
+            if (userInfo.role === 'dev') {
+                document.getElementById('dev-dashboard').classList.add('active');
             } else {
-                errorMsg.style.display = 'block';
+                window.dbGet(window.dbRef(window.db, 'subscription')).then((snapshot) => {
+                    const sub = snapshot.val() || { status: 'active' };
+                    applyLockState(sub.status);
+                });
+
+                if (userInfo.role === 'admin') {
+                    document.getElementById('admin-dashboard').classList.add('active');
+                } else {
+                    document.getElementById('employee-dashboard').classList.add('active');
+                    document.getElementById('emp-badge-name').innerText = userInfo.name;
+                }
             }
         }
 
         function handleLogout() {
+            currentLoggedUserRole = '';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('login-page').classList.add('active');
             document.getElementById('username').value = '';
@@ -288,28 +367,35 @@
 
         function updateSubscriptionSettings(event) {
             event.preventDefault();
-            subscriptionSettings.status = document.getElementById('sub-status-select').value;
-            subscriptionSettings.endDate = document.getElementById('sub-date-input').value;
-            alert('تم تحديث إعدادات الاشتراك بنجاح وسيتم تطبيقها على جميع المستخدمين.');
+            const status = document.getElementById('sub-status-select').value;
+            const endDate = document.getElementById('sub-date-input').value;
+
+            window.dbSet(window.dbRef(window.db, 'subscription'), {
+                status: status,
+                endDate: endDate,
+                price: "20$"
+            }).then(() => {
+                alert('تم تحديث حالة الاشتراك في Firebase بنجاح!');
+            });
         }
 
-        function updateBanners() {
-            const banners = [
-                { textEl: document.getElementById('admin-sub-text'), bannerEl: document.getElementById('admin-sub-banner'), btnEl: document.getElementById('admin-wa-btn') },
-                { textEl: document.getElementById('emp-sub-text'), bannerEl: document.getElementById('emp-sub-banner'), btnEl: document.getElementById('emp-wa-btn') }
-            ];
+        function applyLockState(status) {
+            const adminContent = document.getElementById('admin-content-area');
+            const adminLock = document.getElementById('admin-lock-screen');
+            const empContent = document.getElementById('emp-content-area');
+            const empLock = document.getElementById('emp-lock-screen');
 
-            banners.forEach(b => {
-                if (subscriptionSettings.status === 'active') {
-                    b.bannerEl.classList.remove('expired');
-                    b.textEl.innerText = `حالة الاشتراك: فعال (ينتهي في ${subscriptionSettings.endDate}) - قيمة الاشتراك الشهري: ${subscriptionSettings.price}`;
-                    b.btnEl.style.display = 'none';
-                } else {
-                    b.bannerEl.classList.add('expired');
-                    b.textEl.innerText = `انتبه: اشتراك النظام منتهي أو غير فعال! يرجى تجديد الاشتراك (${subscriptionSettings.price}) لاستمرار العمل.`;
-                    b.btnEl.style.display = 'inline-flex';
-                }
-            });
+            if (status === 'active') {
+                if(adminContent) adminContent.style.display = 'flex';
+                if(adminLock) adminLock.style.display = 'none';
+                if(empContent) empContent.style.display = 'flex';
+                if(empLock) empLock.style.display = 'none';
+            } else {
+                if(adminContent) adminContent.style.display = 'none';
+                if(adminLock) adminLock.style.display = 'block';
+                if(empContent) empContent.style.display = 'none';
+                if(empLock) empLock.style.display = 'block';
+            }
         }
 
         function createEmployeeAccount(event) {
@@ -318,19 +404,19 @@
             const pass = document.getElementById('emp-pass').value.trim();
             const name = document.getElementById('emp-name').value.trim();
 
-            if (usersDB[user]) {
-                alert('اسم المستخدم موجود مسبقاً.');
-                return;
-            }
+            window.dbSet(window.dbRef(window.db, 'users/' + user), {
+                pass: pass,
+                role: 'employee',
+                name: name
+            }).then(() => {
+                document.getElementById('emp-user').value = '';
+                document.getElementById('emp-pass').value = '';
+                document.getElementById('emp-name').value = '';
 
-            usersDB[user] = { pass: pass, role: 'employee', name: name };
-            document.getElementById('emp-user').value = '';
-            document.getElementById('emp-pass').value = '';
-            document.getElementById('emp-name').value = '';
-
-            const msg = document.getElementById('emp-created-msg');
-            msg.style.display = 'block';
-            setTimeout(() => { msg.style.display = 'none'; }, 3000);
+                const msg = document.getElementById('emp-created-msg');
+                msg.style.display = 'block';
+                setTimeout(() => { msg.style.display = 'none'; }, 3000);
+            });
         }
 
         function addTableRow(event) {
@@ -372,28 +458,9 @@
                 document.getElementById('e-f-notes').value = '';
             }
 
-            tableData.push({ seq, name, decision, sub, reward, leave, notes });
-            renderTables();
-        }
-
-        function renderTables() {
-            let htmlContent = '';
-            tableData.forEach(row => {
-                htmlContent += `
-                    <tr>
-                        <td>${row.seq}</td>
-                        <td>${row.name}</td>
-                        <td>${row.decision}</td>
-                        <td>${row.sub}</td>
-                        <td>${row.reward}</td>
-                        <td>${row.leave}</td>
-                        <td>${row.notes}</td>
-                    </tr>
-                `;
+            window.dbPush(window.dbRef(window.db, 'tableData'), {
+                seq, name, decision, sub, reward, leave, notes
             });
-
-            document.getElementById('main-table-body').innerHTML = htmlContent;
-            document.getElementById('emp-table-body').innerHTML = htmlContent;
         }
     </script>
 </body>
