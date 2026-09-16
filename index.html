@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة الشكاوى والاستحقاقات</title>
+    <!-- استيراد خط عربي أنيق (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background-color: #f0f4f8;
+            color: #333;
+            direction: rtl;
+        }
+
+        /* تنسيق صفحات النظام */
+        .page {
+            display: none;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .page.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- واجهة تسجيل الدخول --- */
+        #login-page {
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        .login-card {
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-bottom: 25px;
+            color: #1e3c72;
+            font-size: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            border-color: #2a5298;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #2a5298;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #1e3c72;
+        }
+
+        .error-msg {
+            color: #e74c3c;
+            margin-top: 15px;
+            font-size: 14px;
+            display: none;
+        }
+
+        /* --- واجهة النظام الرئيسية --- */
+        #dashboard-page {
+            background-color: #f8fafc;
+        }
+
+        header {
+            background: #ffffff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #1e3c72;
+            font-size: 22px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .badge {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .logout-btn {
+            background: #fee2e2;
+            color: #991b1b;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: #fecaca;
+        }
+
+        /* لوحة التحكم بالمطور والاشتراكات */
+        .dev-panel {
+            background: linear-gradient(to right, #0f172a, #1e293b);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .dev-panel h3 {
+            font-size: 18px;
+            color: #38bdf8;
+        }
+
+        .subscription-control {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .subscription-control input {
+            padding: 8px;
+            border-radius: 6px;
+            border: none;
+            width: 120px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .subscription-control button {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .subscription-control button:hover {
+            background: #0ea5e9;
+        }
+
+        /* تنسيق الجدول */
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            flex-grow: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        th {
+            background: #1e3c72;
+            color: white;
+            padding: 15px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 14px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #334155;
+        }
+
+        tr:hover {
+            background: #f1f5f9;
+        }
+
+        /* توقيع المطور في الفوتر */
+        footer {
+            text-align: center;
+            padding: 15px;
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. واجهة تسجيل الدخول -->
+    <div id="login-page" class="page active">
+        <div class="login-card">
+            <h2>تسجيل الدخول للنظام</h2>
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">اسم المستخدم</label>
+                    <input type="text" id="username" placeholder="أدخل اسم المستخدم" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">كلمة المرور</label>
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور" required>
+                </div>
+                <button type="submit" class="btn">دخول</button>
+                <div id="error-msg" class="error-msg">اسم المستخدم أو كلمة المرور غير صحيحة!</div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. واجهة لوحة التحكم والجدول -->
+    <div id="dashboard-page" class="page">
+        <header>
+            <h1>نظام إدارة الشكاوى والاستحقاقات المالية</h1>
+            <div class="user-info">
+                <span id="role-badge" class="badge">مدير الشركة</span>
+                <button class="logout-btn" onclick="handleLogout()">تسجيل خروج</button>
+            </div>
+        </header>
+
+        <!-- لوحة تحكم خاصة بالمطور (تظهر فقط عند دخول المطور komail أو المدير) -->
+        <div class="dev-panel">
+            <div>
+                <h3>لوحة تحكم المطور (Komail)</h3>
+                <p style="font-size: 13px; color: #94a3b8; margin-top: 4px;">يمكنك هنا التحكم وتحديث قيمة الاشتراك الشهري للمشتكين.</p>
+            </div>
+            <div class="subscription-control">
+                <label for="monthly-sub-input" style="font-size: 14px;">الاشتراك الشهري:</label>
+                <input type="number" id="monthly-sub-input" value="150000">
+                <button onclick="updateSubscription()">تحديث للكل</button>
+            </div>
+        </div>
+
+        <!-- جدول البيانات -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>تسلسل</th>
+                        <th>اسم المشتكي</th>
+                        <th>رقم القرار</th>
+                        <th>مبلغ الاشتراكات</th>
+                        <th>مبلغ مكافأة نهاية خدمة</th>
+                        <th>مبلغ إجازات</th>
+                        <th>الملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- صف تجريبي أول -->
+                    <tr>
+                        <td>1</td>
+                        <td>أحمد محمد علي</td>
+                        <td>قرار/2026/45</td>
+                        <td class="sub-cell">150,000 د.ع</td>
+                        <td>2,500,000 د.ع</td>
+                        <td>1,200,000 د.ع</td>
+                        <td>مكتمل المستحقات</td>
+                    </tr>
+                    <!-- صف تجريبي ثاني -->
+                    <tr>
+                        <td>2</td>
+                        <td>فاطمة حسن كاظم</td>
+                        <td>قرار/2026/88</td>
+                        <td class="sub-cell">150,000 د.ع</td>
+                        <td>3,100,000 د.ع</td>
+                        <td>900,000 د.ع</td>
+                        <td>بانتظار التدقيق</td>
+                    </tr>
+                    <!-- صف تجريبي ثالث -->
+                    <tr>
+                        <td>3</td>
+                        <td>محمد عبد الأمير</td>
+                        <td>قرار/2026/102</td>
+                        <td class="sub-cell">150,000 د.ع</td>
+                        <td>1,800,000 د.ع</td>
+                        <td>1,500,000 د.ع</td>
+                        <td>تم الصرف</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <footer>
+            تصميم وتطوير: <strong>Komail</strong> | النظام الآمن لإدارة الشكاوى
+        </footer>
+    </div>
+
+    <script>
+        // بيانات الحسابات المعتمدة
+        const accounts = {
+            "nabeel": { pass: "1973", role: "مدير الشركة (نَبيل)" },
+            "komail": { pass: "2004", role: "مطور النظام (كميل)" }
+        };
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+
+            if (accounts[user] && accounts[user].pass === pass) {
+                // تسجيل الدخول بنجاح
+                document.getElementById('login-page').classList.remove('active');
+                document.getElementById('dashboard-page').classList.add('active');
+                
+                // تخصيص الواجهة حسب المستخدم
+                document.getElementById('role-badge').innerText = accounts[user].role;
+                
+                errorMsg.style.display = 'none';
+            } else {
+                errorMsg.style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            document.getElementById('dashboard-page').classList.remove('active');
+            document.getElementById('login-page').classList.add('active');
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // وظيفة تحديث مبلغ الاشتراك الشهري لجميع الصفوف في الجدول (خاصة بصلاحيات المطور)
+        function updateSubscription() {
+            const newValue = document.getElementById('monthly-sub-input').value;
+            const formattedValue = Number(newValue).toLocaleString() + ' د.ع';
+            const subCells = document.querySelectorAll('.sub-cell');
+            
+            subCells.forEach(cell => {
+                cell.innerText = formattedValue;
+            });
+
+            alert('تم تحديث مبلغ الاشتراكات الشهري بنجاح لكافة الحقول.');
+        }
+    </script>
+</body>
+</html>
