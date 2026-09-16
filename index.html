@@ -52,7 +52,16 @@
         /* لوحة المطور الخاصة */
         .dev-container { background: #0f172a; color: white; padding: 30px; border-radius: 10px; }
         .dev-container h2 { color: #38bdf8; margin-bottom: 15px; }
-        .dev-container p { color: #94a3b8; font-size: 15px; line-height: 1.6; }
+        .dev-container p { color: #94a3b8; font-size: 15px; line-height: 1.6; margin-bottom: 20px; }
+        .subscription-box { background: #1e293b; padding: 20px; border-radius: 8px; margin-top: 20px; border: 1px solid #334155; }
+        .subscription-box label { display: block; margin-bottom: 8px; color: #cbd5e1; font-weight: 600; }
+        .subscription-box input, .subscription-box select { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #475569; background: #0f172a; color: white; margin-bottom: 15px; }
+
+        /* تنبيهات الاشتراك */
+        .sub-banner { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .sub-banner.expired { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+        .whatsapp-btn { background: #25d366; color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-flex; align-items: center; gap: 5px; }
+        .whatsapp-btn:hover { background: #22bf5b; }
     </style>
 </head>
 <body>
@@ -87,7 +96,26 @@
         </header>
         <div class="dev-container">
             <h2>مرحباً بك، كميل</h2>
-            <p>هذه الواجهة مخصصة لك بصفتك مطور النظام (Komail / رمز: 2004). النظام يعمل بكامل صلاحياته، ويتم إدارة حسابات الموظفين وإدخال البيانات من قبل مدير الشركة (نبيل الموسوي).</p>
+            <p>من خلال هذه الواجهة يمكنك التحكم بوضع اشتراك النظام (تفعيل أو إلغاء)، وتحديد تاريخ الانتهاء وسعر الاشتراك الشهري (20$).</p>
+            
+            <div class="subscription-box">
+                <h3>إدارة اشتراك النظام</h3>
+                <form onsubmit="updateSubscriptionSettings(event)">
+                    <label>حالة الاشتراك:</label>
+                    <select id="sub-status-select">
+                        <option value="active">فعال</option>
+                        <option value="expired">منتهي / ملغي</option>
+                    </select>
+
+                    <label>تاريخ انتهاء الاشتراك:</label>
+                    <input type="date" id="sub-date-input" value="2026-09-30">
+
+                    <label>سعر الاشتراك الشهري ($):</label>
+                    <input type="text" id="sub-price-input" value="20$" readonly>
+
+                    <button type="submit" class="btn" style="background: #38bdf8; color: #0f172a;">حفظ وتحديث حالة الاشتراك للكل</button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -100,6 +128,12 @@
                 <button class="logout-btn" onclick="handleLogout()">تسجيل خروج</button>
             </div>
         </header>
+
+        <!-- عداد وحالة الاشتراك -->
+        <div id="admin-sub-banner" class="sub-banner">
+            <span id="admin-sub-text">حالة الاشتراك: فعال (ينتهي في 2026/09/30) - تكلفة الاشتراك: 20$</span>
+            <a id="admin-wa-btn" href="https://wa.me/9647744744725" target="_blank" class="whatsapp-btn" style="display:none;">تجديد الاشتراك مع المطور</a>
+        </div>
 
         <!-- قسم إنشاء حسابات الموظفين -->
         <div class="admin-section">
@@ -149,9 +183,7 @@
                             <th>الملاحظات</th>
                         </tr>
                     </thead>
-                    <tbody id="main-table-body">
-                        <!-- البيانات تضاف هنا ديناميكياً -->
-                    </tbody>
+                    <tbody id="main-table-body"></tbody>
                 </table>
             </div>
         </div>
@@ -166,6 +198,12 @@
                 <button class="logout-btn" onclick="handleLogout()">تسجيل خروج</button>
             </div>
         </header>
+
+        <!-- عداد وحالة الاشتراك -->
+        <div id="emp-sub-banner" class="sub-banner">
+            <span id="emp-sub-text">حالة الاشتراك: فعال (ينتهي في 2026/09/30) - تكلفة الاشتراك: 20$</span>
+            <a id="emp-wa-btn" href="https://wa.me/9647744744725" target="_blank" class="whatsapp-btn" style="display:none;">تجديد الاشتراك مع المطور</a>
+        </div>
 
         <div class="admin-section" style="flex-grow: 1; display: flex; flex-direction: column;">
             <h3>إضافة وتحديث سجلات الشكاوى</h3>
@@ -193,22 +231,25 @@
                             <th>الملاحظات</th>
                         </tr>
                     </thead>
-                    <tbody id="emp-table-body">
-                        <!-- نفس محتوى الجدول -->
-                    </tbody>
+                    <tbody id="emp-table-body"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
     <script>
-        // قاعدة بيانات الحسابات الأولية
         let usersDB = {
             "komail": { pass: "2004", role: "dev", name: "كميل (المطور)" },
             "nabeel": { pass: "1973", role: "admin", name: "نبيل الموسوي (مدير الشركة)" }
         };
 
-        // مصفوفة تخزين البيانات للجدول المشترك
+        // إعدادات الاشتراك المبدئية (نهاية شهر 9 سنة 2026)
+        let subscriptionSettings = {
+            status: "active", // active أو expired
+            endDate: "2026-09-30",
+            price: "20$"
+        };
+
         let tableData = [];
 
         function handleLogin(event) {
@@ -224,11 +265,14 @@
                 const userInfo = usersDB[user];
                 if (userInfo.role === 'dev') {
                     document.getElementById('dev-dashboard').classList.add('active');
-                } else if (userInfo.role === 'admin') {
-                    document.getElementById('admin-dashboard').classList.add('active');
-                } else if (userInfo.role === 'employee') {
-                    document.getElementById('employee-dashboard').classList.add('active');
-                    document.getElementById('emp-badge-name').innerText = userInfo.name;
+                } else {
+                    updateBanners();
+                    if (userInfo.role === 'admin') {
+                        document.getElementById('admin-dashboard').classList.add('active');
+                    } else if (userInfo.role === 'employee') {
+                        document.getElementById('employee-dashboard').classList.add('active');
+                        document.getElementById('emp-badge-name').innerText = userInfo.name;
+                    }
                 }
             } else {
                 errorMsg.style.display = 'block';
@@ -242,7 +286,32 @@
             document.getElementById('password').value = '';
         }
 
-        // إضافة حساب موظف جديد بواسطة المدير (نبيل)
+        function updateSubscriptionSettings(event) {
+            event.preventDefault();
+            subscriptionSettings.status = document.getElementById('sub-status-select').value;
+            subscriptionSettings.endDate = document.getElementById('sub-date-input').value;
+            alert('تم تحديث إعدادات الاشتراك بنجاح وسيتم تطبيقها على جميع المستخدمين.');
+        }
+
+        function updateBanners() {
+            const banners = [
+                { textEl: document.getElementById('admin-sub-text'), bannerEl: document.getElementById('admin-sub-banner'), btnEl: document.getElementById('admin-wa-btn') },
+                { textEl: document.getElementById('emp-sub-text'), bannerEl: document.getElementById('emp-sub-banner'), btnEl: document.getElementById('emp-wa-btn') }
+            ];
+
+            banners.forEach(b => {
+                if (subscriptionSettings.status === 'active') {
+                    b.bannerEl.classList.remove('expired');
+                    b.textEl.innerText = `حالة الاشتراك: فعال (ينتهي في ${subscriptionSettings.endDate}) - قيمة الاشتراك الشهري: ${subscriptionSettings.price}`;
+                    b.btnEl.style.display = 'none';
+                } else {
+                    b.bannerEl.classList.add('expired');
+                    b.textEl.innerText = `انتبه: اشتراك النظام منتهي أو غير فعال! يرجى تجديد الاشتراك (${subscriptionSettings.price}) لاستمرار العمل.`;
+                    b.btnEl.style.display = 'inline-flex';
+                }
+            });
+        }
+
         function createEmployeeAccount(event) {
             event.preventDefault();
             const user = document.getElementById('emp-user').value.trim();
@@ -250,12 +319,11 @@
             const name = document.getElementById('emp-name').value.trim();
 
             if (usersDB[user]) {
-                alert('اسم المستخدم موجود مسبقاً، ياختر اسم آخر.');
+                alert('اسم المستخدم موجود مسبقاً.');
                 return;
             }
 
             usersDB[user] = { pass: pass, role: 'employee', name: name };
-            
             document.getElementById('emp-user').value = '';
             document.getElementById('emp-pass').value = '';
             document.getElementById('emp-name').value = '';
@@ -265,11 +333,9 @@
             setTimeout(() => { msg.style.display = 'none'; }, 3000);
         }
 
-        // إضافة سطر جديد للجدول (يعمل من لوحة المدير أو الموظف)
         function addTableRow(event) {
             event.preventDefault();
             
-            // تحديد الحقول النشطة حسب الواجهة المفتوحة
             let seq, name, decision, sub, reward, leave, notes;
             
             if(document.getElementById('admin-dashboard').classList.contains('active')) {
@@ -281,7 +347,6 @@
                 leave = document.getElementById('f-leave').value;
                 notes = document.getElementById('f-notes').value;
                 
-                // تفريغ الحقول
                 document.getElementById('f-seq').value = '';
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-decision').value = '';
@@ -298,7 +363,6 @@
                 leave = document.getElementById('e-f-leave').value;
                 notes = document.getElementById('e-f-notes').value;
                 
-                // تفريغ الحقول
                 document.getElementById('e-f-seq').value = '';
                 document.getElementById('e-f-name').value = '';
                 document.getElementById('e-f-decision').value = '';
@@ -312,7 +376,6 @@
             renderTables();
         }
 
-        // تحديث وعرض الجداول في كلتا الواجهتين (المدير والموظف)
         function renderTables() {
             let htmlContent = '';
             tableData.forEach(row => {
